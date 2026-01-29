@@ -1,0 +1,85 @@
+# garage_counter_lidar_only.py
+from rplidar import RPLidar
+from flask import Flask, render_template
+from threading import Thread
+import os
+import time
+
+# -------------------------
+# CONFIG
+# -------------------------
+PORT_NAME = '/dev/ttyUSB0'
+LINE_A_ANGLE = 80
+LINE_B_ANGLE = 100
+ANGLE_WIDTH = 2
+DISTANCE_THRESHOLD = 2200  # mm
+counter = 0
+last_cross = None
+
+# -------------------------
+# INIT
+# -------------------------
+lidar = RPLidar(PORT_NAME)
+app = Flask(__name__)
+
+# -------------------------
+# LIDAR PROCESSING
+# -------------------------
+def process_scan(scan):
+    global counter, last_cross
+
+    line_a_hit = any(
+        LINE_A_ANGLE <= angle <= LINE_A_ANGLE + ANGLE_WIDTH and dist < DISTANCE_THRESHOLD
+        for (_, angle, dist) in scan
+    )
+
+    line_b_hit = any(
+        LINE_B_ANGLE <= angle <= LINE_B_ANGLE + ANGLE_WIDTH and dist < DISTANCE_THRESHOLD
+        for (_, angle, dist) in scan
+    )
+
+    if line_a_hit:
+        if last_cross == 'B':
+            counter -= 1  # EXIT
+            print("EXIT detected | Count:", counter)
+        last_cross = 'A'
+
+    elif line_b_hit:
+        if last_cross == 'A':
+            counter += 1  # ENTER
+            print("ENTER detected | Count:", counter)
+        last_cross = 'B'
+
+# -------------------------
+# LIDAR LOOP
+# -------------------------
+def lidar_loop():
+    print("LIDAR started")
+    for scan in lidar.iter_scans():
+        process_scan(scan)
+
+# -------------------------
+# WEB DASHBOARD
+# -------------------------
+@app.route('/')
+def dashboard():
+    return render_template('dashboard.html', count=counter)
+
+# -------------------------
+# MAIN
+# -------------------------
+if __name__ == "__main__":
+    Thread(target=lidar_loop, daemon=True).start()
+    app.run(host='0.0.0.0', port=5000)
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Garage Counter</title>
+</head>
+<body>
+    <h1>Current Garage Count</h1>
+    <h2>{{ count }}</h2>
+</body>
+</html>
