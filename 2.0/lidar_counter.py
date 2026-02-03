@@ -1,4 +1,3 @@
-
 from rplidar import RPLidar
 from config import *
 import time
@@ -11,7 +10,7 @@ lock = threading.Lock()
 
 
 def start_lidar():
-    global car_count
+    global car_count, last_event, last_event_time
 
     lidar = RPLidar(LIDAR_PORT)
     lidar.start_motor()
@@ -27,28 +26,28 @@ def start_lidar():
                 if distance <= 0 or distance > TRIGGER_DISTANCE:
                     continue
 
-                # ENTRY line
+                # ===== ENTRY LINE =====
                 if abs(angle - ENTRY_LINE) < ANGLE_WINDOW:
                     if not entry_active:
                         with lock:
-							if car_count < MAX_SPOTS:
-								car_count += 1
-								last_event = "ENTER"
-								last_event_time = time.strftime("%I:%M %p")
+                            if car_count < MAX_SPOTS:
+                                car_count += 1
+                                last_event = "ENTER"
+                                last_event_time = time.strftime("%I:%M %p")
                         entry_active = True
                         print("ENTER →", car_count)
                 else:
                     entry_active = False
 
-                # EXIT line
+                # ===== EXIT LINE =====
                 if abs(angle - EXIT_LINE) < ANGLE_WINDOW:
                     if not exit_active:
                         with lock:
                             if car_count > 0:
-								car_count -= 1
-								last_event = "EXIT"
-								last_event_time = time.strftime("%I:%M %p")
-						exit_active = True
+                                car_count -= 1
+                                last_event = "EXIT"
+                                last_event_time = time.strftime("%I:%M %p")
+                        exit_active = True
                         print("EXIT →", car_count)
                 else:
                     exit_active = False
