@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Garage Availability</title>
-    <meta http-equiv="refresh" content="1">
 
     <style>
         body {
@@ -40,14 +40,35 @@
 </head>
 
 <body>
+
     <div class="card">
         <h1>Open Parking Spots</h1>
-        <div class="spots">{{ open_spots }}</div>
 
-        <div class="status">
-            Last Event: {{ event }} <br>
-            Time: {{ event_time }}
+        <div class="spots" id="spots">--</div>
+
+        <div class="status" id="status">
+            Loading...
         </div>
     </div>
+
+    <script>
+        function updateStatus() {
+            fetch("/status")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("spots").innerText = data.open_spots;
+                    document.getElementById("status").innerHTML =
+                        "Last Event: " + data.event + "<br>Time: " + data.event_time;
+                })
+                .catch(error => console.error("Fetch error:", error));
+        }
+
+        // Update twice per second
+        setInterval(updateStatus, 500);
+
+        // Initial load
+        updateStatus();
+    </script>
+
 </body>
 </html>
