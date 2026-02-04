@@ -1,0 +1,14 @@
+[Unit]
+Description=Garage Parking Counter
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/garage/main.py
+WorkingDirectory=/home/pi/garage
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
