@@ -1,0 +1,26 @@
+// web.cpp
+#include "httplib.h"
+#include "state.h"
+#include "config.h"
+#include <string>
+
+void start_web() {
+    httplib::Server svr;
+
+    svr.Get("/status", [](const httplib::Request&, httplib::Response& res) {
+        std::lock_guard<std::mutex> lock(shared_state.mtx);
+
+        int open_spots = Config::MAX_SPOTS - shared_state.car_count;
+        if (open_spots < 0) open_spots = 0;
+
+        std::string json = "{";
+        json += "\"open_spots\":" + std::to_string(open_spots) + ",";
+        json += "\"event\":\"" + shared_state.last_event + "\",";
+        json += "\"event_time\":\"" + shared_state.last_event_time + "\"";
+        json += "}";
+
+        res.set_content(json, "application/json");
+    });
+
+    svr.listen("0.0.0.0", 5000);
+}
