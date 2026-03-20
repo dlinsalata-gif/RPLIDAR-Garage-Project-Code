@@ -1,0 +1,13 @@
+// state.h
+#pragma once
+#include <mutex>
+#include <string>
+
+struct GarageState {
+    int car_count = 0;
+    std::string last_event = "None";
+    std::string last_event_time = "N/A";
+    std::mutex mtx;
+};
+
+extern GarageState shared_state;
