@@ -1,0 +1,43 @@
+g++ main.cpp lidar.cpp web.cpp state.cpp ~/rplidar_sdk/sdk/src/*.cpp -I ~/rplidar_sdk/sdk/include -I ~/rplidar_sdk/sdk/src -I ~/rplidar_sdk/sdk/src/hal -o garage_app -pthread
+/usr/bin/ld: /tmp/ccPsylB1.o:(.data.rel.local+0x0): multiple definition of `Config::LIDAR_PORT'; /tmp/cc8tfjvi.o:(.data.rel.local+0x0): first defined here
+/usr/bin/ld: /tmp/ccEu6eEx.o: in function `sl::internal::AsyncTransceiver::unbindAndClose()':
+sl_async_transceiver.cpp:(.text+0x78c): undefined reference to `rp::hal::Thread::join(unsigned long)'
+/usr/bin/ld: sl_async_transceiver.cpp:(.text+0x79c): undefined reference to `rp::hal::Thread::join(unsigned long)'
+/usr/bin/ld: /tmp/ccEu6eEx.o: in function `sl::internal::AsyncTransceiver::_proc_rxThread()':
+sl_async_transceiver.cpp:(.text+0xa2c): undefined reference to `rp::hal::Thread::SetSelfPriority(rp::hal::Thread::priority_val_t)'
+/usr/bin/ld: /tmp/ccEu6eEx.o: in function `sl::internal::AsyncTransceiver::_proc_decoderThread()':
+sl_async_transceiver.cpp:(.text+0xc74): undefined reference to `rp::hal::Thread::SetSelfPriority(rp::hal::Thread::priority_val_t)'
+/usr/bin/ld: /tmp/ccEu6eEx.o: in function `rp::hal::Thread rp::hal::Thread::create_member<sl::internal::AsyncTransceiver, &sl::internal::AsyncTransceiver::_proc_decoderThread>(sl::internal::AsyncTransceiver*)':
+sl_async_transceiver.cpp:(.text._ZN2rp3hal6Thread13create_memberIN2sl8internal16AsyncTransceiverEXadL_ZNS5_19_proc_decoderThreadEvEEEES1_PT_[_ZN2rp3hal6Thread13create_memberIN2sl8internal16AsyncTransceiverEXadL_ZNS5_19_proc_decoderThreadEvEEEES1_PT_]+0x24): undefined reference to `rp::hal::Thread::create(unsigned long (*)(void*), void*)'
+/usr/bin/ld: /tmp/ccEu6eEx.o: in function `rp::hal::Thread rp::hal::Thread::create_member<sl::internal::AsyncTransceiver, &sl::internal::AsyncTransceiver::_proc_rxThread>(sl::internal::AsyncTransceiver*)':
+sl_async_transceiver.cpp:(.text._ZN2rp3hal6Thread13create_memberIN2sl8internal16AsyncTransceiverEXadL_ZNS5_14_proc_rxThreadEvEEEES1_PT_[_ZN2rp3hal6Thread13create_memberIN2sl8internal16AsyncTransceiverEXadL_ZNS5_14_proc_rxThreadEvEEEES1_PT_]+0x24): undefined reference to `rp::hal::Thread::create(unsigned long (*)(void*), void*)'
+/usr/bin/ld: /tmp/cc98GKxp.o: in function `sl::SlamtecLidarDriver::SlamtecLidarDriver()':
+sl_lidar_driver.cpp:(.text._ZN2sl18SlamtecLidarDriverC2Ev[_ZN2sl18SlamtecLidarDriverC5Ev]+0x160): undefined reference to `sl::internal::LIDARSampleDataUnpacker::CreateInstance(sl::internal::LIDARSampleDataListener&)'
+/usr/bin/ld: /tmp/cc98GKxp.o: in function `sl::SlamtecLidarDriver::negotiateSerialBaudRate(unsigned int, unsigned int*)':
+sl_lidar_driver.cpp:(.text._ZN2sl18SlamtecLidarDriver23negotiateSerialBaudRateEjPj[_ZN2sl18SlamtecLidarDriver23negotiateSerialBaudRateEjPj]+0x148): undefined reference to `rp::arch::rp_getms()'
+/usr/bin/ld: sl_lidar_driver.cpp:(.text._ZN2sl18SlamtecLidarDriver23negotiateSerialBaudRateEjPj[_ZN2sl18SlamtecLidarDriver23negotiateSerialBaudRateEjPj]+0x1dc): undefined reference to `rp::arch::rp_getms()'
+/usr/bin/ld: /tmp/cc2CJpgo.o: in function `sl::SerialPortChannel::SerialPortChannel(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)':
+sl_serial_channel.cpp:(.text._ZN2sl17SerialPortChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl17SerialPortChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x30): undefined reference to `rp::hal::serial_rxtx::CreateRxTx()'
+/usr/bin/ld: /tmp/cca7ktQq.o: in function `sl::TcpChannel::TcpChannel(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)':
+sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x34): undefined reference to `rp::net::StreamSocket::CreateSocket(rp::net::SocketBase::socket_family_t)'
+/usr/bin/ld: sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x4c): undefined reference to `rp::net::SocketAddress::SocketAddress()'
+/usr/bin/ld: sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x94): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: /tmp/cca7ktQq.o: in function `sl::TcpChannel::bind(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)':
+sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x30): undefined reference to `rp::net::SocketAddress::SocketAddress(char const*, int, rp::net::SocketAddress::address_type_t)'
+/usr/bin/ld: sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x40): undefined reference to `rp::net::SocketAddress::operator=(rp::net::SocketAddress const&)'
+/usr/bin/ld: sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x48): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10TcpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x5c): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: /tmp/cca7ktQq.o: in function `sl::TcpChannel::~TcpChannel()':
+sl_tcp_channel.cpp:(.text._ZN2sl10TcpChannelD2Ev[_ZN2sl10TcpChannelD5Ev]+0x30): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: /tmp/cccEl7xj.o: in function `sl::UdpChannel::UdpChannel(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)':
+sl_udp_channel.cpp:(.text._ZN2sl10UdpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x34): undefined reference to `rp::net::DGramSocket::CreateSocket(rp::net::SocketBase::socket_family_t)'
+/usr/bin/ld: sl_udp_channel.cpp:(.text._ZN2sl10UdpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x4c): undefined reference to `rp::net::SocketAddress::SocketAddress()'
+/usr/bin/ld: sl_udp_channel.cpp:(.text._ZN2sl10UdpChannelC2ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannelC5ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x94): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: /tmp/cccEl7xj.o: in function `sl::UdpChannel::bind(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, int)':
+sl_udp_channel.cpp:(.text._ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x30): undefined reference to `rp::net::SocketAddress::SocketAddress(char const*, int, rp::net::SocketAddress::address_type_t)'
+/usr/bin/ld: sl_udp_channel.cpp:(.text._ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x40): undefined reference to `rp::net::SocketAddress::operator=(rp::net::SocketAddress const&)'
+/usr/bin/ld: sl_udp_channel.cpp:(.text._ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x48): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: sl_udp_channel.cpp:(.text._ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi[_ZN2sl10UdpChannel4bindERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEi]+0x5c): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+/usr/bin/ld: /tmp/cccEl7xj.o: in function `sl::UdpChannel::~UdpChannel()':
+sl_udp_channel.cpp:(.text._ZN2sl10UdpChannelD2Ev[_ZN2sl10UdpChannelD5Ev]+0x30): undefined reference to `rp::net::SocketAddress::~SocketAddress()'
+collect2: error: ld returned 1 exit status
