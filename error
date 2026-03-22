@@ -1,11 +1,9 @@
-g++ main.cpp lidar.cpp web.cpp state.cpp \
-~/rplidar_sdk/sdk/src/*.cpp \
-~/rplidar_sdk/sdk/src/hal/*.cpp \
-~/rplidar_sdk/sdk/src/arch/linux/*.cpp \
-~/rplidar_sdk/sdk/src/dataunpacker/*.cpp \
--I ~/rplidar_sdk/sdk/include \
--I ~/rplidar_sdk/sdk/src \
--I ~/rplidar_sdk/sdk/src/hal \
--I ~/rplidar_sdk/sdk/src/arch/linux \
--I ~/rplidar_sdk/sdk/src/dataunpacker \
--o garage_app -pthread
+/usr/bin/ld: /tmp/ccH5Tv4H.o: in function `sl::internal::_registerDataUnpackerHandlers(std::vector<sl::internal::IDataUnpackerHandler*, std::allocator<sl::internal::IDataUnpackerHandler*> >&)':
+dataunpacker.cpp:(.text+0x28): undefined reference to `sl::internal::unpacker::UnpackerHandler_NormalNode::UnpackerHandler_NormalNode()'
+/usr/bin/ld: dataunpacker.cpp:(.text+0x8c): undefined reference to `sl::internal::unpacker::UnpackerHandler_HQNode::UnpackerHandler_HQNode()'
+/usr/bin/ld: dataunpacker.cpp:(.text+0xf0): undefined reference to `sl::internal::unpacker::UnpackerHandler_CapsuleNode::UnpackerHandler_CapsuleNode()'
+/usr/bin/ld: dataunpacker.cpp:(.text+0x154): undefined reference to `sl::internal::unpacker::UnpackerHandler_UltraCapsuleNode::UnpackerHandler_UltraCapsuleNode()'
+/usr/bin/ld: dataunpacker.cpp:(.text+0x1b8): undefined reference to `sl::internal::unpacker::UnpackerHandler_DenseCapsuleNode::UnpackerHandler_DenseCapsuleNode()'
+/usr/bin/ld: dataunpacker.cpp:(.text+0x21c): undefined reference to `sl::internal::unpacker::UnpackerHandler_UltraDenseCapsuleNode::UnpackerHandler_UltraDenseCapsuleNode()'
+collect2: error: ld returned 1 exit status
+dlinsalata@raspberrypi:~/garage_project_C++ 
