@@ -1,0 +1,13 @@
+g++ main.cpp lidar.cpp web.cpp state.cpp \
+~/rplidar_sdk/sdk/src/*.cpp \
+~/rplidar_sdk/sdk/src/hal/*.cpp \
+~/rplidar_sdk/sdk/src/arch/linux/*.cpp \
+~/rplidar_sdk/sdk/src/dataunpacker/*.cpp \
+~/rplidar_sdk/sdk/src/dataunpacker/unpacker/*.cpp \
+-I ~/rplidar_sdk/sdk/include \
+-I ~/rplidar_sdk/sdk/src \
+-I ~/rplidar_sdk/sdk/src/hal \
+-I ~/rplidar_sdk/sdk/src/arch/linux \
+-I ~/rplidar_sdk/sdk/src/dataunpacker \
+-I ~/rplidar_sdk/sdk/src/dataunpacker/unpacker \
+-o garage_app -pthread
