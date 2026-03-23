@@ -1,0 +1,12 @@
+[Unit]
+Description=Garage C++ System
+After=network.target
+
+[Service]
+ExecStart=/home/pi/garage_project_C++/garage_app
+WorkingDirectory=/home/pi/garage_project_C++
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
