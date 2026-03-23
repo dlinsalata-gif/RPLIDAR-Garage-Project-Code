@@ -1,0 +1,11 @@
+[Unit]
+Description=ngrok tunnel
+After=network.target
+
+[Service]
+ExecStart=/home/pi/ngrok http 5000
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
