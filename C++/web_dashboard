@@ -1,11 +1,32 @@
-// web.cpp
 #include "httplib.h"
 #include "state.h"
 #include "config.h"
+
+#include <fstream>
+#include <sstream>
 #include <string>
+#include <mutex>
+
+// Load HTML file
+std::string load_html() {
+    std::ifstream file("index.html");
+
+    if (!file.is_open()) {
+        return "<h1>ERROR: index.html not found</h1>";
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 
 void start_web() {
     httplib::Server svr;
+
+    
+    svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content(load_html(), "text/html");
+    });
 
     svr.Get("/status", [](const httplib::Request&, httplib::Response& res) {
         std::lock_guard<std::mutex> lock(shared_state.mtx);
@@ -21,6 +42,8 @@ void start_web() {
 
         res.set_content(json, "application/json");
     });
+
+    std::cout << "Web server running on port 5000..." << std::endl;
 
     svr.listen("0.0.0.0", 5000);
 }
