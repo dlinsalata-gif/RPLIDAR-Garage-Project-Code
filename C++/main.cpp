@@ -1,4 +1,4 @@
-// main.cpp
+#include "web.h"
 #include <thread>
 
 void start_lidar();
@@ -7,9 +7,7 @@ int main() {
     std::thread lidar_thread(start_lidar);
     lidar_thread.detach();
 
-    // Later: start web server here
+    start_web();  // 👈 THIS MUST RUN
 
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    return 0;
 }
