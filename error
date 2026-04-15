@@ -1,13 +1,21 @@
-g++ main.cpp lidar.cpp web.cpp state.cpp \
-~/rplidar_sdk/sdk/src/*.cpp \
-~/rplidar_sdk/sdk/src/hal/*.cpp \
-~/rplidar_sdk/sdk/src/arch/linux/*.cpp \
-~/rplidar_sdk/sdk/src/dataunpacker/*.cpp \
-~/rplidar_sdk/sdk/src/dataunpacker/unpacker/*.cpp \
--I ~/rplidar_sdk/sdk/include \
--I ~/rplidar_sdk/sdk/src \
--I ~/rplidar_sdk/sdk/src/hal \
--I ~/rplidar_sdk/sdk/src/arch/linux \
--I ~/rplidar_sdk/sdk/src/dataunpacker \
--I ~/rplidar_sdk/sdk/src/dataunpacker/unpacker \
--o garage_app -pthread
+rfid_test.cpp:1:9: warning: #pragma once in main file
+    1 | #pragma once
+      |         ^~~~
+rfid.cpp: In member function ‘bool PiRFID::setupModule()’:
+rfid.cpp:334:28: error: ‘RFID_PORT’ is not a member of ‘Config’
+  334 |         if (!begin(Config::RFID_PORT, Config::RFID_BAUD)) {
+      |                            ^~~~~~~~~
+rfid.cpp:334:47: error: ‘RFID_BAUD’ is not a member of ‘Config’
+  334 |         if (!begin(Config::RFID_PORT, Config::RFID_BAUD)) {
+      |                                               ^~~~~~~~~
+rfid.cpp:366:30: error: ‘RFID_READ_POWER’ is not a member of ‘Config’
+  366 |         setReadPower(Config::RFID_READ_POWER);
+      |                              ^~~~~~~~~~~~~~~
+rfid.cpp: In function ‘bool recent_teacher_detected()’:
+rfid.cpp:499:30: error: ‘RFID_WINDOW_MS’ is not a member of ‘Config’
+  499 |     return age_ms <= Config::RFID_WINDOW_MS &&
+      |                              ^~~~~~~~~~~~~~
+rfid.cpp: In function ‘void start_rfid()’:
+rfid.cpp:509:49: error: ‘RFID_PORT’ is not a member of ‘Config’
+  509 |     std::cerr << "Starting RFID on " << Config::RFID_PORT << "\n";
+      |                                                 ^~~~~~~~~
