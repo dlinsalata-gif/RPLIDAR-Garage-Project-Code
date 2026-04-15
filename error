@@ -1,11 +1,14 @@
-Starting RFID test...
+tarting RFID test...
 Starting RFID on /dev/ttyUSB1
 sendCommand: [FF] [00] [03] [1D] [0C]
-getVersion attempt 1 failed. msg[0]=1
-sendCommand: [FF] [00] [03] [1D] [0C]
-getVersion attempt 2 failed. msg[0]=1
-sendCommand: [FF] [00] [03] [1D] [0C]
-getVersion attempt 3 failed. msg[0]=1
-RFID getVersion failed after retries. msg[0]=1
-RFID setup failed.
-dlinsalata@raspberry
+sendCommand: [FF] [02] [93] [00] [05] [51] [7D]
+sendCommand: [FF] [02] [91] [01] [01] [70] [3B]
+sendCommand: [FF] [01] [97] [01] [4B] [BC]
+sendCommand: [FF] [02] [92] [01] [F4] [40] [AD]
+RFID setup OK. Starting continuous read...
+sendCommand: [FF] [03] [9A] [01] [0C] [00] [A3] [5D]
+sendCommand: [FF] [10] [2F] [00] [00] [01] [22] [00] [00] [05] [07] [22] [10] [00] [1B] [03] [E8] [01] [FF] [DD] [2B]
+response: [FF] [00] [22] [05] [05]
+RFID High return loss, check antenna!
+response: [FF] [00] [22] [05] [05]
+RFID High return loss, check antenna!
