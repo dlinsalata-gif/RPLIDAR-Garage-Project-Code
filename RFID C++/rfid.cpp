@@ -30,20 +30,20 @@ static constexpr uint8_t TMR_SR_OPCODE_SET_TAG_PROTOCOL           = 0x93;
 static constexpr uint8_t TMR_SR_OPCODE_SET_REGION                 = 0x97;
 static constexpr uint8_t TMR_SR_OPCODE_SET_READER_OPTIONAL_PARAMS = 0x9A;
 
-static constexpr uint8_t ALL_GOOD                      = 0;
-static constexpr uint8_t ERROR_COMMAND_RESPONSE_TIMEOUT= 1;
-static constexpr uint8_t ERROR_CORRUPT_RESPONSE        = 2;
-static constexpr uint8_t ERROR_WRONG_OPCODE_RESPONSE   = 3;
-static constexpr uint8_t ERROR_UNKNOWN_OPCODE          = 4;
-static constexpr uint8_t RESPONSE_IS_TEMPERATURE       = 5;
-static constexpr uint8_t RESPONSE_IS_KEEPALIVE         = 6;
-static constexpr uint8_t RESPONSE_IS_TEMPTHROTTLE      = 7;
-static constexpr uint8_t RESPONSE_IS_TAGFOUND          = 8;
-static constexpr uint8_t RESPONSE_IS_NOTAGFOUND        = 9;
-static constexpr uint8_t RESPONSE_IS_UNKNOWN           = 10;
-static constexpr uint8_t RESPONSE_SUCCESS              = 11;
-static constexpr uint8_t RESPONSE_FAIL                 = 12;
-static constexpr uint8_t RESPONSE_IS_HIGHRETURNLOSS    = 13;
+static constexpr uint8_t ALL_GOOD                       = 0;
+static constexpr uint8_t ERROR_COMMAND_RESPONSE_TIMEOUT = 1;
+static constexpr uint8_t ERROR_CORRUPT_RESPONSE         = 2;
+static constexpr uint8_t ERROR_WRONG_OPCODE_RESPONSE    = 3;
+static constexpr uint8_t ERROR_UNKNOWN_OPCODE           = 4;
+static constexpr uint8_t RESPONSE_IS_TEMPERATURE        = 5;
+static constexpr uint8_t RESPONSE_IS_KEEPALIVE          = 6;
+static constexpr uint8_t RESPONSE_IS_TEMPTHROTTLE       = 7;
+static constexpr uint8_t RESPONSE_IS_TAGFOUND           = 8;
+static constexpr uint8_t RESPONSE_IS_NOTAGFOUND         = 9;
+static constexpr uint8_t RESPONSE_IS_UNKNOWN            = 10;
+static constexpr uint8_t RESPONSE_SUCCESS               = 11;
+static constexpr uint8_t RESPONSE_FAIL                  = 12;
+static constexpr uint8_t RESPONSE_IS_HIGHRETURNLOSS     = 13;
 
 static constexpr uint8_t REGION_NORTHAMERICA = 0x01;
 static constexpr uint16_t COMMAND_TIME_OUT = 2000;
@@ -127,6 +127,10 @@ public:
 
     void flushInput() {
         if (fd_ >= 0) tcflush(fd_, TCIFLUSH);
+    }
+
+    void flushBoth() {
+        if (fd_ >= 0) tcflush(fd_, TCIOFLUSH);
     }
 
 private:
@@ -264,8 +268,9 @@ public:
         if (opCode == TMR_SR_OPCODE_READ_TAG_ID_MULTIPLE) {
             if (msg[1] == 0x00) {
                 uint16_t statusMsg = 0;
-                for (uint8_t x = 0; x < 2; x++)
+                for (uint8_t x = 0; x < 2; x++) {
                     statusMsg |= (uint32_t)msg[3 + x] << (8 * (1 - x));
+                }
 
                 if (statusMsg == 0x0400) return RESPONSE_IS_KEEPALIVE;
                 if (statusMsg == 0x0504) return RESPONSE_IS_TEMPTHROTTLE;
@@ -284,9 +289,10 @@ public:
     }
 
     uint8_t getTagDataBytes() {
-        uint8_t tagDataLength = 0;
-        for (uint8_t x = 0; x < 2; x++)
+        uint16_t tagDataLength = 0;
+        for (uint8_t x = 0; x < 2; x++) {
             tagDataLength |= (uint16_t)msg[24 + x] << (8 * (1 - x));
+        }
         uint8_t tagDataBytes = tagDataLength / 8;
         if (tagDataLength % 8 > 0) tagDataBytes++;
         return tagDataBytes;
@@ -295,8 +301,9 @@ public:
     uint8_t getTagEPCBytes() {
         uint16_t epcBits = 0;
         uint8_t tagDataBytes = getTagDataBytes();
-        for (uint8_t x = 0; x < 2; x++)
+        for (uint8_t x = 0; x < 2; x++) {
             epcBits |= (uint16_t)msg[27 + tagDataBytes + x] << (8 * (1 - x));
+        }
         uint8_t epcBytes = epcBits / 8;
         epcBytes -= 4;
         return epcBytes;
@@ -304,15 +311,17 @@ public:
 
     uint16_t getTagTimestamp() {
         uint32_t timeStamp = 0;
-        for (uint8_t x = 0; x < 4; x++)
+        for (uint8_t x = 0; x < 4; x++) {
             timeStamp |= (uint32_t)msg[17 + x] << (8 * (3 - x));
+        }
         return timeStamp;
     }
 
     uint32_t getTagFreq() {
         uint32_t freq = 0;
-        for (uint8_t x = 0; x < 3; x++)
+        for (uint8_t x = 0; x < 3; x++) {
             freq |= (uint32_t)msg[14 + x] << (8 * (2 - x));
+        }
         return freq;
     }
 
@@ -335,36 +344,59 @@ public:
             return false;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        serial_.flushInput();
+        // Give the CH340 + reader time to settle after opening
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        serial_.flushBoth();
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        serial_.flushBoth();
 
-        getVersion();
+        // Try getVersion a few times in case startup bytes were still present
+        bool gotVersion = false;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            getVersion();
 
-        if (msg[0] == ERROR_WRONG_OPCODE_RESPONSE) {
-            stopReading();
-            std::cerr << "Module continuously reading. Asking it to stop...\n";
-            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-        } else {
-            // On Pi/USB we just keep 115200, which matches SparkFun's hardware serial recommendation.
+            if (msg[0] == ALL_GOOD) {
+                gotVersion = true;
+                break;
+            }
+
+            if (msg[0] == ERROR_WRONG_OPCODE_RESPONSE) {
+                std::cerr << "RFID may already be continuously reading. Sending stopReading...\n";
+                stopReading();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                serial_.flushBoth();
+            } else {
+                std::cerr << "getVersion attempt " << (attempt + 1)
+                          << " failed. msg[0]=" << (int)msg[0] << "\n";
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                serial_.flushBoth();
+            }
         }
 
-        getVersion();
-        if (msg[0] != ALL_GOOD) {
-            std::cerr << "RFID getVersion failed. msg[0]=" << (int)msg[0] << "\n";
+        if (!gotVersion) {
+            std::cerr << "RFID getVersion failed after retries. msg[0]=" << (int)msg[0] << "\n";
             return false;
         }
 
         setTagProtocol();
-        if (msg[0] != ALL_GOOD) std::cerr << "setTagProtocol warning\n";
+        if (msg[0] != ALL_GOOD) {
+            std::cerr << "setTagProtocol failed. msg[0]=" << (int)msg[0] << "\n";
+        }
 
         setAntennaPort();
-        if (msg[0] != ALL_GOOD) std::cerr << "setAntennaPort warning\n";
+        if (msg[0] != ALL_GOOD) {
+            std::cerr << "setAntennaPort failed. msg[0]=" << (int)msg[0] << "\n";
+        }
 
         setRegion(REGION_NORTHAMERICA);
-        if (msg[0] != ALL_GOOD) std::cerr << "setRegion warning\n";
+        if (msg[0] != ALL_GOOD) {
+            std::cerr << "setRegion failed. msg[0]=" << (int)msg[0] << "\n";
+        }
 
         setReadPower(Config::RFID_READ_POWER);
-        if (msg[0] != ALL_GOOD) std::cerr << "setReadPower warning\n";
+        if (msg[0] != ALL_GOOD) {
+            std::cerr << "setReadPower failed. msg[0]=" << (int)msg[0] << "\n";
+        }
 
         return true;
     }
@@ -373,9 +405,11 @@ public:
                      uint16_t timeOut = COMMAND_TIME_OUT, bool waitForResponse = true) {
         msg[1] = size;
         msg[2] = opcode;
+
         for (uint8_t x = 0; x < size; x++) {
             msg[3 + x] = data[x];
         }
+
         sendCommand(timeOut, waitForResponse);
     }
 
@@ -408,21 +442,26 @@ private:
         if (!waitForResponse) return;
 
         auto startTime = std::chrono::steady_clock::now();
+
         while (serial_.available() == 0) {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - startTime).count();
+
             if (elapsed > timeOut) {
                 msg[0] = ERROR_COMMAND_RESPONSE_TIMEOUT;
                 return;
             }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         messageLength = MAX_MSG_SIZE - 1;
         uint8_t spot = 0;
+
         while (spot < messageLength) {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - startTime).count();
+
             if (elapsed > timeOut) {
                 msg[0] = ERROR_COMMAND_RESPONSE_TIMEOUT;
                 return;
@@ -431,10 +470,12 @@ private:
             if (serial_.available()) {
                 int value = serial_.readByte();
                 if (value < 0) continue;
+
                 msg[spot] = static_cast<uint8_t>(value);
 
-                if (spot == 1)
+                if (spot == 1) {
                     messageLength = msg[1] + 7;
+                }
 
                 spot++;
                 spot %= MAX_MSG_SIZE;
@@ -461,10 +502,12 @@ private:
     void printMessageArray() {
         uint8_t amtToPrint = msg[1] + 5;
         if (amtToPrint > MAX_MSG_SIZE) amtToPrint = MAX_MSG_SIZE;
+
         for (uint16_t x = 0; x < amtToPrint; x++) {
-            std::cerr << " ["
-                      << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
-                      << static_cast<int>(msg[x]) << "]";
+            std::cerr << " [";
+            if (msg[x] < 0x10) std::cerr << "0";
+            std::cerr << std::uppercase << std::hex << static_cast<int>(msg[x]);
+            std::cerr << "]";
         }
         std::cerr << std::dec << "\n";
     }
@@ -472,16 +515,18 @@ private:
     uint16_t calculateCRC(uint8_t* u8Buf, uint8_t len) {
         static uint16_t crctable[] = {
             0x0000, 0x1021, 0x2042, 0x3063,
-            0x4084, 0x50a5, 0x60c6, 0x70e7,
-            0x8108, 0x9129, 0xa14a, 0xb16b,
-            0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
+            0x4084, 0x50A5, 0x60C6, 0x70E7,
+            0x8108, 0x9129, 0xA14A, 0xB16B,
+            0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
         };
 
         uint16_t crc = 0xFFFF;
+
         for (uint8_t i = 0; i < len; i++) {
             crc = ((crc << 4) | (u8Buf[i] >> 4)) ^ crctable[crc >> 12];
             crc = ((crc << 4) | (u8Buf[i] & 0x0F)) ^ crctable[crc >> 12];
         }
+
         return crc;
     }
 };
@@ -490,6 +535,7 @@ static PiRFID g_rfid;
 
 bool recent_teacher_detected() {
     std::lock_guard<std::mutex> lock(shared_state.mtx);
+
     if (!shared_state.rfid_seen) return false;
 
     auto age_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -507,6 +553,7 @@ std::string get_last_rfid_tag() {
 
 void start_rfid() {
     std::cerr << "Starting RFID on " << Config::RFID_PORT << "\n";
+    g_rfid.enableDebugging(true);
 
     if (!g_rfid.setupModule()) {
         std::cerr << "RFID setup failed.\n";
@@ -540,12 +587,17 @@ void start_rfid() {
                     shared_state.rfid_seen = true;
                 }
 
-                std::cerr << "RFID TAG epc[" << tag.epc << "] rssi[" << tag.rssi
-                          << "] freq[" << tag.freq << "] time[" << tag.timestamp << "]\n";
+                std::cerr << "RFID TAG epc[" << tag.epc
+                          << "] rssi[" << tag.rssi
+                          << "] freq[" << tag.freq
+                          << "] time[" << tag.timestamp
+                          << "]\n";
             } else if (responseType == ERROR_CORRUPT_RESPONSE) {
                 std::cerr << "RFID Bad CRC\n";
             } else if (responseType == RESPONSE_IS_HIGHRETURNLOSS) {
                 std::cerr << "RFID High return loss, check antenna!\n";
+            } else {
+                std::cerr << "RFID Unknown response type: " << (int)responseType << "\n";
             }
         }
 
