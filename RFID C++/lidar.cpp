@@ -9,6 +9,9 @@
 #include <cmath>
 #include <cstdlib>
 
+// ===== DEBUG SWITCH =====
+const bool DEBUG_LIDAR = true;
+
 // Placeholder — will connect to real SDK
 float fake_read_angle() { return rand() % 360; }
 float fake_read_distance() { return rand() % 4000; }
@@ -25,6 +28,14 @@ void start_lidar() {
     while (true) {
         float angle = fake_read_angle();
         float distance = fake_read_distance();
+
+        // ===== DEBUG PRINT =====
+        if (DEBUG_LIDAR) {
+            if (distance > 0 && distance < 300) { // filter noise
+                std::cout << "[LIDAR] angle=" << angle
+                          << " distance=" << distance << std::endl;
+            }
+        }
 
         if (distance <= 0 || distance > Config::TRIGGER_DISTANCE) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -46,14 +57,14 @@ void start_lidar() {
                     if (ignore_teacher) {
                         shared_state.last_event = "ENTER_IGNORED_TEACHER";
                         shared_state.last_event_time = "NOW";
-                        std::cout << "ENTER ignored (teacher)" << std::endl;
+                        std::cout << "[EVENT] ENTER ignored (teacher)" << std::endl;
                     } else {
                         if (shared_state.car_count < Config::MAX_SPOTS) {
                             shared_state.car_count++;
                         }
                         shared_state.last_event = "ENTER";
                         shared_state.last_event_time = "NOW";
-                        std::cout << "ENTER -> " << shared_state.car_count << std::endl;
+                        std::cout << "[EVENT] ENTER -> " << shared_state.car_count << std::endl;
                     }
 
                     last_entry_event = now;
@@ -77,14 +88,14 @@ void start_lidar() {
                     if (ignore_teacher) {
                         shared_state.last_event = "EXIT_IGNORED_TEACHER";
                         shared_state.last_event_time = "NOW";
-                        std::cout << "EXIT ignored (teacher)" << std::endl;
+                        std::cout << "[EVENT] EXIT ignored (teacher)" << std::endl;
                     } else {
                         if (shared_state.car_count > 0) {
                             shared_state.car_count--;
                         }
                         shared_state.last_event = "EXIT";
                         shared_state.last_event_time = "NOW";
-                        std::cout << "EXIT -> " << shared_state.car_count << std::endl;
+                        std::cout << "[EVENT] EXIT -> " << shared_state.car_count << std::endl;
                     }
 
                     last_exit_event = now;
