@@ -1,5 +1,5 @@
-RFID TAG epc[E20047099FE06820CCFE010A] rssi[-37] freq[908250] time[1002]
-response: [FF] [00] [22] [04] [00]
-RFID scanning...
-response: [FF] [28] [22] [00] [00] [10] [00] [1B] [01] [FF] [01] [01] [DF] [11] [0D] [EB] [7A] [00] [00] [00] [0A] [00] [7F] [05] [00] [00] [00] [00] [80] [34] [00] [E2] [00] [47] [09] [9F] [E0] [68] [20] [CC] [FE] [01] [0A] [8E] [DB]
-RFID TAG epc[E20047099FE06820CCFE010A] rssi[-33] freq[912250] time[10]
+/usr/bin/ld: /tmp/cc8ynsnf.o:(.data.rel.local+0x0): multiple definition of `Config::LIDAR_PORT'; /tmp/ccyyDuhT.o:(.data.rel.local+0x0): first defined here
+/usr/bin/ld: /tmp/cc8ynsnf.o:(.data.rel.local+0x8): multiple definition of `Config::RFID_PORT'; /tmp/ccyyDuhT.o:(.data.rel.local+0x8): first defined here
+/usr/bin/ld: /tmp/ccbHkqod.o:(.data.rel.local+0x0): multiple definition of `Config::LIDAR_PORT'; /tmp/ccyyDuhT.o:(.data.rel.local+0x0): first defined here
+/usr/bin/ld: /tmp/ccbHkqod.o:(.data.rel.local+0x8): multiple definition of `Config::RFID_PORT'; /tmp/ccyyDuhT.o:(.data.rel.local+0x8): first defined here
+collect2: error: ld returned 1 exit status
