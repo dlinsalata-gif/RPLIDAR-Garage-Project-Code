@@ -1,5 +1,12 @@
-g++ main.cpp lidar.cpp state.cpp web.cpp rfid.cpp \
-  -I$HOME/rplidar_sdk/sdk/include \
-  -I$HOME/rplidar_sdk/sdk/src \
-  $HOME/rplidar_sdk/output/Linux/Release/sdk/src/librplidar_sdk.a \
-  -o garage -pthread
+lidar.cpp:17:21: error: ‘lidar’ is not a namespace-name
+   17 | using namespace sl::lidar;
+      |                     ^~~~~
+lidar.cpp: In function ‘void start_lidar()’:
+lidar.cpp:111:10: error: ‘class sl::ILidarDriver’ has no member named ‘startMotor’
+  111 |     drv->startMotor();
+      |          ^~~~~~~~~~
+lidar.cpp:117:14: error: ‘class sl::ILidarDriver’ has no member named ‘stopMotor’
+  117 |         drv->stopMotor();
+      |              ^~~~~~~~~
+lidar.cpp:254:10: error: ‘class sl::ILidarDriver’ has no member named ‘stopMotor’
+  254 |     drv->stopMotor();
