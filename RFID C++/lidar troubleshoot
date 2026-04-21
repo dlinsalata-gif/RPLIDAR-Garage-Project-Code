@@ -1,3 +1,1 @@
-g++ main.cpp lidar.cpp state.cpp web.cpp rfid.cpp   -I$HOME/rplidar_sdk/sdk/include   -I$HOME/rplidar_sdk/sdk/src   $HOME/rplidar_sdk/output/Linux/Release/sdk/src/librplidar_sdk.a   -o garage -pthread
-/usr/bin/ld: cannot find /home/dlinsalata/rplidar_sdk/output/Linux/Release/sdk/src/librplidar_sdk.a: No such file or directory
-collect2: error: ld returned 1 exit status
+find ~/rplidar_sdk \( -name "*.a" -o -name "*.so" \)
