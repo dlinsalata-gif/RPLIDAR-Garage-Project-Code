@@ -1,0 +1,257 @@
+#include "config.h"
+#include "state.h"
+#include "rfid.h"
+#include "rfid_utils.h"
+
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+
+#include "sl_lidar.h"
+#include "sl_lidar_driver.h"
+
+using namespace sl;
+using namespace sl::lidar;
+
+// ===== TUNING =====
+// Turn this off once calibrated
+static const bool DEBUG_LIDAR = true;
+
+// A1 serial baud
+static const int LIDAR_BAUD = 115200;
+
+// Ignore anything farther than this when deciding "car present".
+// Your sample scan shows the near object around ~180-360 mm and the
+// background much farther away, so 450 mm is a good first cut.
+static const float EFFECTIVE_TRIGGER_DISTANCE_MM = 450.0f;
+
+// Require the object to be seen on this many consecutive scans
+// before triggering an event.
+static const int REQUIRED_CONSECUTIVE_SCANS = 2;
+
+// Print only nearby valid points to keep logs readable
+static const float DEBUG_PRINT_MAX_DISTANCE_MM = 600.0f;
+
+// Provisional angles from your narrowed-down scan.
+// Near object begins around ~129.5° and returns to farther values
+// around ~244-245°. Adjust after live testing.
+static const float ENTRY_LINE_DEG = 130.5f;
+static const float EXIT_LINE_DEG  = 244.5f;
+
+// Narrow window for a small model
+static const float EFFECTIVE_ANGLE_WINDOW_DEG = 2.0f;
+
+static inline bool is_valid_node(const sl_lidar_response_measurement_node_hq_t& node)
+{
+    float distance_mm = node.dist_mm_q2 / 4.0f;
+    return (node.quality != 0) && (distance_mm > 0.0f);
+}
+
+static inline float node_angle_deg(const sl_lidar_response_measurement_node_hq_t& node)
+{
+    return node.angle_z_q14 * 90.f / (1 << 14);
+}
+
+static inline float node_distance_mm(const sl_lidar_response_measurement_node_hq_t& node)
+{
+    return node.dist_mm_q2 / 4.0f;
+}
+
+void start_lidar()
+{
+    std::cout << "Lidar running (RPLIDAR A1 real SDK)" << std::endl;
+
+    // ----- Create driver -----
+    ILidarDriver* drv = *createLidarDriver();
+    if (!drv) {
+        std::cerr << "Failed to create RPLIDAR driver." << std::endl;
+        return;
+    }
+
+    IChannel* channel = *createSerialPortChannel(Config::LIDAR_PORT, LIDAR_BAUD);
+    if (!channel) {
+        std::cerr << "Failed to create serial channel for " << Config::LIDAR_PORT << std::endl;
+        delete drv;
+        return;
+    }
+
+    sl_result op_result = drv->connect(channel);
+    if (SL_IS_FAIL(op_result)) {
+        std::cerr << "Failed to connect to RPLIDAR on " << Config::LIDAR_PORT << std::endl;
+        delete drv;
+        return;
+    }
+
+    // Optional info/health check
+    sl_lidar_response_device_info_t devinfo;
+    op_result = drv->getDeviceInfo(devinfo);
+    if (SL_IS_OK(op_result)) {
+        std::cout << "RPLIDAR connected successfully." << std::endl;
+    } else {
+        std::cerr << "Warning: could not read device info." << std::endl;
+    }
+
+    sl_lidar_response_device_health_t healthinfo;
+    op_result = drv->getHealth(healthinfo);
+    if (SL_IS_OK(op_result)) {
+        if (healthinfo.status == SL_LIDAR_STATUS_ERROR) {
+            std::cerr << "RPLIDAR health status ERROR." << std::endl;
+            drv->disconnect();
+            delete drv;
+            return;
+        }
+    } else {
+        std::cerr << "Warning: could not read lidar health." << std::endl;
+    }
+
+    // A1 needs motor start
+    drv->startMotor();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    op_result = drv->startScan(0, 1);
+    if (SL_IS_FAIL(op_result)) {
+        std::cerr << "Failed to start scanning." << std::endl;
+        drv->stopMotor();
+        drv->disconnect();
+        delete drv;
+        return;
+    }
+
+    bool entry_latched = false;
+    bool exit_latched = false;
+    int entry_hits = 0;
+    int exit_hits = 0;
+
+    auto last_entry_event = std::chrono::steady_clock::now();
+    auto last_exit_event  = std::chrono::steady_clock::now();
+
+    while (true) {
+        sl_lidar_response_measurement_node_hq_t nodes[8192];
+        size_t count = sizeof(nodes) / sizeof(nodes[0]);
+
+        op_result = drv->grabScanDataHq(nodes, count);
+        if (SL_IS_FAIL(op_result)) {
+            std::cerr << "grabScanDataHq failed, retrying..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
+        }
+
+        drv->ascendScanData(nodes, count);
+
+        bool entry_seen_this_scan = false;
+        bool exit_seen_this_scan = false;
+        float best_entry_distance = std::numeric_limits<float>::max();
+        float best_exit_distance  = std::numeric_limits<float>::max();
+
+        for (size_t i = 0; i < count; i++) {
+            if (!is_valid_node(nodes[i])) {
+                continue;
+            }
+
+            float angle = node_angle_deg(nodes[i]);
+            float distance = node_distance_mm(nodes[i]);
+
+            if (DEBUG_LIDAR && distance < DEBUG_PRINT_MAX_DISTANCE_MM) {
+                std::cout << "[LIDAR] angle=" << angle
+                          << " distance=" << distance << std::endl;
+            }
+
+            if (distance > EFFECTIVE_TRIGGER_DISTANCE_MM) {
+                continue;
+            }
+
+            if (std::fabs(angle - ENTRY_LINE_DEG) < EFFECTIVE_ANGLE_WINDOW_DEG) {
+                entry_seen_this_scan = true;
+                best_entry_distance = std::min(best_entry_distance, distance);
+            }
+
+            if (std::fabs(angle - EXIT_LINE_DEG) < EFFECTIVE_ANGLE_WINDOW_DEG) {
+                exit_seen_this_scan = true;
+                best_exit_distance = std::min(best_exit_distance, distance);
+            }
+        }
+
+        auto now = std::chrono::steady_clock::now();
+
+        // ===== ENTRY =====
+        if (entry_seen_this_scan) {
+            entry_hits++;
+        } else {
+            entry_hits = 0;
+            entry_latched = false;
+        }
+
+        if (!entry_latched &&
+            entry_hits >= REQUIRED_CONSECUTIVE_SCANS &&
+            std::chrono::duration_cast<std::chrono::seconds>(now - last_entry_event).count()
+                >= Config::EVENT_COOLDOWN_SECONDS) {
+
+            bool ignore_teacher = recent_teacher_detected();
+
+            std::lock_guard<std::mutex> lock(shared_state.mtx);
+
+            if (ignore_teacher) {
+                shared_state.last_event = "ENTER_IGNORED_TEACHER";
+                shared_state.last_event_time = "NOW";
+                std::cout << "[EVENT] ENTER ignored (teacher)" << std::endl;
+            } else {
+                if (shared_state.car_count < Config::MAX_SPOTS) {
+                    shared_state.car_count++;
+                }
+                shared_state.last_event = "ENTER";
+                shared_state.last_event_time = "NOW";
+                std::cout << "[EVENT] ENTER -> " << shared_state.car_count
+                          << "  (dist=" << best_entry_distance << " mm)" << std::endl;
+            }
+
+            last_entry_event = now;
+            entry_latched = true;
+        }
+
+        // ===== EXIT =====
+        if (exit_seen_this_scan) {
+            exit_hits++;
+        } else {
+            exit_hits = 0;
+            exit_latched = false;
+        }
+
+        if (!exit_latched &&
+            exit_hits >= REQUIRED_CONSECUTIVE_SCANS &&
+            std::chrono::duration_cast<std::chrono::seconds>(now - last_exit_event).count()
+                >= Config::EVENT_COOLDOWN_SECONDS) {
+
+            bool ignore_teacher = recent_teacher_detected();
+
+            std::lock_guard<std::mutex> lock(shared_state.mtx);
+
+            if (ignore_teacher) {
+                shared_state.last_event = "EXIT_IGNORED_TEACHER";
+                shared_state.last_event_time = "NOW";
+                std::cout << "[EVENT] EXIT ignored (teacher)" << std::endl;
+            } else {
+                if (shared_state.car_count > 0) {
+                    shared_state.car_count--;
+                }
+                shared_state.last_event = "EXIT";
+                shared_state.last_event_time = "NOW";
+                std::cout << "[EVENT] EXIT -> " << shared_state.car_count
+                          << "  (dist=" << best_exit_distance << " mm)" << std::endl;
+            }
+
+            last_exit_event = now;
+            exit_latched = true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Unreachable in current flow, but left for completeness
+    drv->stop();
+    drv->stopMotor();
+    drv->disconnect();
+    delete drv;
+}
