@@ -1,11 +1,1 @@
-dlinsalata@raspberrypi:~ $  ~/rplidar_sdk/output/Linux/Release/ultra_simple /dev/ttyUSB0
-Ultra simple LIDAR data grabber for SLAMTEC LIDAR.
-Version: 2.1.0
-Usage:
- For serial channel
- /home/dlinsalata/rplidar_sdk/output/Linux/Release/ultra_simple --channel --serial <com port> [baudrate]
- The baudrate used by different models is as follows:
-  A1(115200),A2M7(256000),A2M8(115200),A2M12(256000),A3(256000),S1(256000),S2(1000000),S3(1000000)
- For udp channel
- /home/dlinsalata/rplidar_sdk/output/Linux/Release/ultra_simple --channel --udp <ipaddr> [port NO.]
- The T1 default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.
+~/rplidar_sdk/output/Linux/Release/ultra_simple --channel --serial /dev/ttyUSB0 115200
