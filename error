@@ -1,14 +1,5 @@
-MAIN STARTED
-Lidar running (RPLIDAR A1 real SDK)
-STARTING WEB
-Starting RFID on /dev/ttyUSB1
-Web server running on port 5000...
-Warning: could not read device info.
-getVersion attempt 1 failed. msg[0]=1
-Warning: could not read lidar health.
-getVersion attempt 2 failed. msg[0]=1
-getVersion attempt 3 failed. msg[0]=1
-RFID getVersion failed after retries. msg[0]=1
-RFID setup failed.
-Failed to start scanning.
-^Z
+g++ main.cpp lidar.cpp state.cpp web.cpp rfid.cpp \
+  -I$HOME/rplidar_sdk/sdk/include \
+  -I$HOME/rplidar_sdk/sdk/src \
+  $HOME/rplidar_sdk/output/Linux/Release/libsl_lidar_sdk.a \
+  -o garage -pthread
